@@ -1,0 +1,50 @@
+{% macro app_snapshots(result_path, app) %}
+    <div class="row">
+        <div class="col-1"></div>
+        <div class="col-10">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>#Actions</th>
+                    <th>#DifferentBehavior</th>
+                    <th>#Unreachable</th>
+                    <th>#Other</th>
+                    <th>Last update</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for snapshot in app.snapshots %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('report_v2', result_path=result_path, app_name=app.name, snapshot_name=snapshot.id) }}">{{ snapshot.id }}</a>
+                            -<a href="{{ url_for('send_result_static_v2', path=snapshot.log_path) }}">(log)</a>
+                            -<a href="{{ url_for('report_sb_v2', result_path=result_path, app_name=app.name, snapshot_name=snapshot.id) }}">(SB)</a>
+                        </td>
+                        <td>{{ snapshot.actions }}</td>
+                        <td>{{ snapshot.different_behavior }}</td>
+                        <td>{{ snapshot.unreachable }}</td>
+                        <td>{{ snapshot.other }}</td>
+                        <td>{{ snapshot.last_update }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="col-1"></div>
+    </div>
+{% endmacro %}
+{% macro app_post_analysis_script() %}
+    <script>
+        $('.post_analysis').on('click', function () {
+            let result_path = $(this).find('.result_path').attr('value');
+            let app_name = $(this).find('.app_name').attr('value');
+            let path = "/v2/"+ result_path +"/app/"+ app_name + "/post_analysis";
+            $.getJSON(path, {},
+                function(data) {
+                    alert(data.result);
+                    location.reload();
+                });
+        });
+    </script>
+{% endmacro %}

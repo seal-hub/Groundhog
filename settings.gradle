@@ -1,0 +1,3 @@
+include ':UseCaseExecutor'
+include ':app'
+rootProject.name = "Latte"

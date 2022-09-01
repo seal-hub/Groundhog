@@ -1,0 +1,14 @@
+{% from "snapshot_macro.html" import snapshot_summary, snapshot_bs_summary with context %}
+{% extends "layout.html" %}
+{% block title %}
+    App {{ app.name }}
+{% endblock %}
+{% block content %}
+
+    {% for address_book in app.address_books %}
+        <h3>{{ loop.index}}: {{ address_book.snapshot_name() }}</h3>
+        {{ snapshot_summary(address_book, '') }}
+        {{ snapshot_bs_summary(address_book) }}
+        <hr><hr>
+    {% endfor %}
+{% endblock %}

@@ -1,0 +1,155 @@
+{% macro compare_layout_form(left_xml_field, op_xml_field, right_xml_field, layout_type) %}
+    <div class="mb-3 row">
+        <label class="form-label">Compare {{ layout_type | capitalize }}</label>
+        <div class="col-4 ">
+            <select class="form-select" name="left{{ layout_type }}[]" aria-label="Left {{ layout_type }} Mode">
+                {% for item in [('None', 'None'),
+                                            ('exp','Initial'),
+                                            ('tb','TalkBack'),
+                                            ('reg','Touch'),
+                                            ('areg','A11yTouch')] %}
+                    <option value="{{ item[0] }}" class="text-end"
+                            {% if left_xml_field == item[0] %}
+                            selected
+                            {% endif %}>
+                        {{item[1]}}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-4">
+            <select class="form-select" name="op{{ layout_type }}[]" aria-label="Comparison Operator">
+                {% for op in ['=', '≠'] %}
+                    <option value="{{ op }}" class="text-center"
+                            {% if op_xml_field == op %}
+                            selected
+                            {% endif %}>
+                        {{op}}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-4">
+            <select class="form-select" name="right{{ layout_type }}[]" aria-label="Right {{ layout_type }} Mode">
+                {% for item in [('None', 'None'),
+                                            ('exp','Initial'),
+                                            ('tb','TalkBack'),
+                                            ('reg','Touch'),
+                                            ('areg','A11yTouch')] %}
+                    <option value="{{ item[0] }}" class="text-start"
+                            {% if right_xml_field == item[0] %}
+                            selected
+                            {% endif %}>
+                        {{item[1]}}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+{% endmacro %}
+{% macro xml_diff_button(result_path,
+                         app_name,
+                         snapshot_name,
+                         action_index,
+                         is_sighted,
+                         left_mode,
+                         right_mode,
+                         is_equal = False) %}
+    <span class="showdiff btn
+        {{ 'btn-light' if ((left_mode == 'base') != is_equal) else 'btn-warning' }}
+    rounded-pill m-1 fs-6" style="display: inline-block;">
+        {{ mode_to_repr[left_mode]}}
+        {{ '=' if is_equal  else '≠'}}
+        {{ mode_to_repr[right_mode]}}
+            <input type="hidden" class="snapshot-result-path" value="{{ result_path }}">
+        <input type="hidden" class="snapshot-app" value="{{ app_name }}">
+        <input type="hidden" class="snapshot-name" value="{{ snapshot_name }}">
+        <input type="hidden" class="snapshot-index" value="{{ action_index }}">
+        <input type="hidden" class="snapshot-sighted" value="{{ 'sighted' if is_sighted else 'unsighted' }}">
+        <input type="hidden" class="snapshot-left-mode" value="{{ left_mode }}">
+        <input type="hidden" class="snapshot-right-mode" value="{{ right_mode }}">
+    </span>
+{% endmacro %}
+{% macro xml_diff_modal() %}
+    <div class="modal fade" id="xmldiffmodal" tabindex="-1" role="dialog" aria-labelledby="myXMLModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog  modal-fullscreen">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <iframe id="diff_iframe_id" style="width: 100%; height: 100%" src=""></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endmacro %}
+{% macro xml_diff_script() %}
+<script>
+    $(function () {
+        $('.showdiff').on('click', function () {
+            let result_path = $(this).find('.snapshot-result-path').attr('value');
+            let app_name = $(this).find('.snapshot-app').attr('value');
+            let snapshot_name = $(this).find('.snapshot-name').attr('value');
+            let index = $(this).find('.snapshot-index').attr('value');
+            let sighted_str = $(this).find('.snapshot-sighted').attr('value');
+            let left_mode = $(this).find('.snapshot-left-mode').attr('value');
+            let right_mode = $(this).find('.snapshot-right-mode').attr('value');
+            let host_url = window.location.href.split("/v2/")[0]
+            let iframe_link = `${host_url}/v2/${result_path}/app/${app_name}/snapshot/${snapshot_name}/action/${index}/${sighted_str}/diff/${left_mode}/${right_mode}`
+            $('#diff_iframe_id').attr('src', iframe_link);
+            $('#xmldiffmodal').modal('show');
+        });
+    });
+</script>
+{% endmacro %}
+{% macro image_modal() %}
+    <div class="modal fade" id="imagemodal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <img src="" class="imagepreview" style="width: 100%;">
+                </div>
+            </div>
+        </div>
+    </div>
+{% endmacro %}
+{% macro image_script() %}
+    <script>
+        $(function () {
+            $('.enlarge').on('click', function () {
+                $('.imagepreview').attr('src', $(this).find('img').attr('src'));
+                $('#imagemodal').modal('show');
+            });
+        });
+    </script>
+{% endmacro %}
+{% macro nodes_diff_modal() %}
+    <div class="modal fade" id="nodediffmodal" tabindex="-1" role="dialog" aria-labelledby="myNodeModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog  modal-fullscreen">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <div class="row">
+                        <div class="col-6" id="left_node_page"></div>
+                        <div class="col-6" id="right_node_page"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endmacro %}
+{% macro nodes_diff_script() %}
+    <script>
+        $(function () {
+            $('.show-node-diff').on('click', function () {
+                let left_node = $(this).find('.left_node').attr('value');
+                let right_node = $(this).find('.right_node').attr('value');
+                $('#left_node_page').html(left_node);
+                $('#right_node_page').html(right_node);
+                $('#nodediffmodal').modal('show');
+            });
+        });
+    </script>
+{% endmacro %}

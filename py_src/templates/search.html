@@ -1,0 +1,428 @@
+{% from "action_macro.html" import action_row with context %}
+{% from "utils_macro.html" import compare_layout_form with context %}
+{% from "snapshot_macro.html" import action_tag_script, action_result_row, snapshot_summary, snapshot_bs_summary with context %}
+{% extends "layout.html" %}
+{% block title %}
+    Search
+{% endblock %}
+{% block content %}
+    <div class="row">
+        <form action="{{ url_for('search_v2', result_path_str=result_path) }}" id="search_form" method="GET">
+            <div class="row">
+                <div class="col-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Action
+                        </div>
+
+                        <div class="card-body">
+
+                            <div class="row mb-3">
+                                <h5>
+                                    Action Attributes
+                                </h5>
+                            </div>
+                            {% for (attr, value) in zip(action_attr_names, action_attr_values) %}
+                                <div class="row mb-3">
+                                    <div class="col-6">
+                                        <select class="form-select" name="actionSearchAttr[]" aria-label="Action Search Attribute">
+                                            {% for item in [('ALL', 'All'),
+                                                    ('text','Text'),
+                                                    ('content_desc','ContentDescription'),
+                                                    ('class','ClassName'),
+                                                    ('clickable','Clickable'),
+                                                    ('checkable','Checkable'),
+                                                    ('visible','Visible'),
+                                                    ('enabled','Enabled'),
+                                                    ('clickable_span','ClickableSpan'),
+                                                    ('resource_id','ResourceId'),
+                                                    ('a11y_actions','A11y Actions'),
+                                                    ('invalid','Invalid'),
+                                                    ('context_clickable','Context Clickable'),
+                                                    ('important_for_accessibility','ImportantForAccessibility'),
+                                                    ('area','Area'),
+                                                    ('width','Width'),
+                                                    ('height','Height')] %}
+                                                <option value="{{ item[0] }}" class="text-start"
+                                                        {% if attr == item[0] %}
+                                                        selected
+                                                        {% endif %}>
+                                                    {{item[1]}}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-6">
+                                        <input type="text" class="form-control" name="actionSearchQuery[]" id="actionSearchField"
+                                                {% if value %}
+                                               value="{{ value }}"
+                                                {% endif %}
+                                        >
+                                    </div>
+                                </div>
+                            {% endfor %}
+{#                            <div class="row mb-3">#}
+{#                                {% for (action_attr_name, action_attr_field) in action_attrs %}#}
+{#                                    <div class="col-3">#}
+{#                                        <label for="{{ action_attr_name }}SearchField" class="form-label">{{ action_attr_name }}</label>#}
+{#                                        <input type="text" class="form-control" name="{{ action_attr_name }}" id="{{ action_attr_name }}SearchField"#}
+{#                                        {% if action_attr_field %}#}
+{#                                            value="{{ action_attr_field }}"#}
+{#                                        {% endif %}#}
+{#                                        >#}
+{#                                    </div>#}
+{#                                {% endfor %}#}
+{#                            </div>#}
+{#                            <div class="row mb-3">#}
+{#                                {% for (action_xml_attr_name, action_xml_attr_field) in action_xml_attrs %}#}
+{#                                    <div class="col-2">#}
+{#                                        <label for="{{ action_xml_attr_name }}SearchField" class="form-label">{{ action_xml_attr_name }}</label>#}
+{#                                        <select class="form-select" name="{{ action_xml_attr_name }}" id="{{ action_xml_attr_name }}SearchField" aria-label="{{ action_xml_attr_name }}e">#}
+{#                                            {% for item in ['Any', 'true', 'false'] %}#}
+{#                                                <option value="{{ item }}"#}
+{#                                                        {% if action_xml_attr_field==item %}#}
+{#                                                        selected#}
+{#                                                        {% endif %}>#}
+{#                                                    {{ item }}#}
+{#                                                </option>#}
+{#                                            {% endfor  %}#}
+{#                                        </select>#}
+{#                                    </div>#}
+{#                                {% endfor %}#}
+{#                            </div>#}
+
+
+                            <div class="mb-3 row">
+                                <div class="col-4 ">
+                                    <label class="form-label">TalkBack Result</label>
+                                    <select class="form-select" name="tbResult" aria-label="TalkBack Result">
+                                        {% for item in [('ALL', 'All'),
+                                                    ('COMPLETED','Completed'),
+                                                    ('FAILED','Failed'),
+                                                    ('FAILED_PERFORM','Failed Perform'),
+                                                    ('FAILED_LOCATE','Failed Locate'),
+                                                    ('timeout','Timeout')] %}
+                                            <option value="{{ item[0] }}"
+                                                    {% if tb_result_field == item[0] %}
+                                                    selected
+                                                    {% endif %}>
+                                                {{item[1]}}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label">Touch Result</label>
+                                    <select class="form-select" name="regResult" aria-label="Touch Result">
+                                        {% for item in [('ALL', 'All'),
+                                                    ('COMPLETED','Completed'),
+                                                    ('FAILED','Failed'),
+                                                    ('FAILED_PERFORM','Failed Perform'),
+                                                    ('FAILED_LOCATE','Failed Locate'),
+                                                    ('timeout','Timeout')] %}
+                                            <option value="{{ item[0] }}"
+                                                    {% if touch_result_field == item[0] %}
+                                                    selected
+                                                    {% endif %}>
+                                                {{item[1]}}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label">A11yAPI Result</label>
+                                    <select class="form-select" name="aregResult" aria-label="A11yTouch Result">
+                                        {% for item in [('ALL', 'All'),
+                                                    ('COMPLETED','Completed'),
+                                                    ('FAILED','Failed'),
+                                                    ('FAILED_PERFORM','Failed Perform'),
+                                                    ('FAILED_LOCATE','Failed Locate'),
+                                                    ('timeout','Timeout')] %}
+                                            <option value="{{ item[0] }}"
+                                                    {% if a11y_api_result_field == item[0] %}
+                                                    selected
+                                                    {% endif %}>
+                                                {{item[1]}}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <h5>
+                                    Summary Values
+                                </h5>
+                            </div>
+                            {% for (name, value) in zip(summary_names, summary_values) %}
+                                <div class="row mb-3">
+                                    <div class="col-6">
+                                        <select class="form-select" name="summarySearchName[]" aria-label="Action Summary Result Fields">
+                                            {% for item in [('ANY', 'Any'),
+                                                    ('tb_dir_issue', 'TB Directional Loc.'),
+                                                    ('tb_touch_issue', 'TB Touch Loc.'),
+                                                    ('loc_issue', 'Loc Issue'),
+                                                    ('tb_act_issue', 'TB Act.'),
+                                                    ('touch_act_issue', 'Touch Act.'),
+                                                    ('act_issue', 'Act Issue.'),
+                                                    ('api_act_issue', 'API A11y Act.'),
+                                                    ('a11y_api_change_xml', 'API A11y XML Change'),
+                                                    ('did_tb_click', 'Did TB Click'),
+                                                    ('children_nodes_action_indices', 'TBR Children'),
+                                                    ('changed_elements_a11y_api', 'EventChanges in API A11y'),
+                                                    ('changed_elements_touch', 'EventChanges in Touch'),
+                                                    ('changed_elements_tb_touch', 'EventChanges in TalkBack'),
+                                                    ('only_touch_change_event', 'OnlyTouchChangeEvent'),
+                                                    ('same_layout_base_touch', 'SameTouchLayout'),
+                                                    ('same_layout_base_tb_touch', 'SameTBLayout'),
+                                                    ('same_layout_base_a11y_api', 'SameA11yAPILayout'),
+                                                    ('exact_same_layout_base_a11y_api', 'ExactSameA11yAPILayout'),
+                                                    ('auto_ignored', 'AutoIgnored'),
+                                                    ('possible_to_locate','PossibleToLocate'),
+                                                    ] %}
+                                                <option value="{{ item[0] }}" class="text-start"
+                                                        {% if name == item[0] %}
+                                                        selected
+                                                        {% endif %}>
+                                                    {{item[1]}}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-6">
+                                        <input type="text" class="form-control" name="summarySearchValue[]" id="summarySearchField"
+                                                {% if value %}
+                                               value="{{ value }}"
+                                                {% endif %}
+                                        >
+                                    </div>
+                                </div>
+                            {% endfor %}
+
+
+                        </div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="card mb-2">
+                        <div class="card-header">
+                            Layout
+                        </div>
+                        <div class="card-body">
+
+{#                            <div class="row mb-3">#}
+{#                                <div class="col-3">#}
+{#                                    <label for="xmlSearchField" class="form-label">Search in XML</label>#}
+{#                                </div>#}
+{#                                <div class="col-3">#}
+{#                                    <select class="form-select" name="xmlSearchMode" aria-label="XML Search Mode">#}
+{#                                        {% for item in [('ALL', 'All'),#}
+{#                                                ('exp','Initial'),#}
+{#                                                ('tb','TalkBack'),#}
+{#                                                ('reg','Touch'),#}
+{#                                                ('areg','A11yTouch')] %}#}
+{#                                            <option value="{{ item[0] }}" class="text-start"#}
+{#                                                    {% if xml_search_mode == item[0] %}#}
+{#                                                    selected#}
+{#                                                    {% endif %}>#}
+{#                                                {{item[1]}}#}
+{#                                            </option>#}
+{#                                        {% endfor %}#}
+{#                                    </select>#}
+{#                                </div>#}
+{#                            </div>#}
+                            <div class="row mb-3">
+                                <h5>
+                                    Layout Attributes
+                                </h5>
+                            </div>
+                                {% for (attr, field) in zip(xml_search_attrs, xml_search_fields) %}
+                                    <div class="row mb-3">
+                                        <div class="col-6">
+                                            <select class="form-select" name="xmlSearchAttr[]" aria-label="XML Search Attribute">
+                                                {% for item in [('ALL', 'All'),
+                                                    ('text','Text'),
+                                                    ('content_desc','ContentDescription'),
+                                                    ('class','ClassName'),
+                                                    ('clickable','Clickable'),
+                                                    ('checkable','Checkable'),
+                                                    ('visible','Visible'),
+                                                    ('enabled','Enabled'),
+                                                    ('clickableSpan','ClickableSpan'),
+                                                    ('resource_id','ResourceId'),
+                                                    ('actionList','A11y Actions'),
+                                                    ('invalid','Invalid'),
+                                                    ('contextClickable','Context Clickable'),
+                                                    ('importantForAccessibility','ImportantForAccessibility'),
+                                                    ('area','Area'),
+                                                    ('width','Width'),
+                                                    ('height','Height'),
+                                                    ('supportsWebAction','SupportsWebAction')] %}
+                                                    <option value="{{ item[0] }}" class="text-start"
+                                                            {% if attr == item[0] %}
+                                                            selected
+                                                            {% endif %}>
+                                                        {{item[1]}}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-6">
+                                            <input type="text" class="form-control" name="xmlSearchQuery[]" id="xmlSearchField"
+                                                    {% if field %}
+                                                   value="{{ field }}"
+                                                    {% endif %}
+                                            >
+                                        </div>
+                                    </div>
+                                {% endfor %}
+
+                            {% for item in xml_fields %}
+                                {{ compare_layout_form(item[0], item[1], item[2], 'XML') }}
+                            {% endfor %}
+                            {% for item in screen_fields %}
+                                {{ compare_layout_form(item[0], item[1], item[2], 'SCREEN') }}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            App & Snapshot
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <label for="appField" class="form-label">App</label>
+                                <select class="form-select" name="appName" aria-label="App Name">
+                                    {% for item in app_names %}
+                                        <option value="{{ item }}" class="text-start"
+                                                {% if app_name_field == item %}
+                                                selected
+                                                {% endif %}>
+                                            {{item}}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <input type="checkbox" class="form-check-input" name="oneResultPerSnapshot" id="oneResultPerSnapshotField"
+                                        {% if one_result_per_snapshot == 'on' %}
+                                       checked
+                                        {% endif %}
+                                >
+                                <label for="oneResultPerSnapshotField" class="form-label">One Result Per Snapshot</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-4">
+                        <div class="card">
+                            <div class="card-header">
+                                Other
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="countSearchActionField" class="form-label">Number of Action Results</label>
+                                    <select class="form-select" name="action_limit_field" id="countSearchActionField" aria-label="Number of Action Results">
+                                        {% for i in [10, 50, 100, 500] %}
+                                            <option value="{{ i }}"
+                                                    {% if action_limit_field==i %}
+                                                    selected
+                                                    {% endif %}>
+                                                {{i}}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="countSearchSnapshotField" class="form-label">Number of Snapshots Results</label>
+                                    <select class="form-select" name="snapshot_limit_field" id="countSearchSnapshotField" aria-label="Number of Snapshot Results">
+                                        {% for i in [1, 5, 10, 20, 50, 100, 500, 1000, 2000] %}
+                                            <option value="{{ i }}"
+                                                    {% if snapshot_limit_field==i %}
+                                                    selected
+                                                    {% endif %}>
+                                                {{i}}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="includeTagsField" class="form-label">Include Tags</label>
+                                    <input type="text" class="form-control" name="includeTags" id="includeTagsField"
+                                            {% if include_tags_field %}
+                                           value="{{ include_tags_field }}"
+                                            {% endif %}
+                                    >
+                                </div>
+                                <div class="mb-3">
+                                    <label for="excludeTagsField" class="form-label">Exclude Tags</label>
+                                    <input type="text" class="form-control" name="excludeTags" id="excludeTagsField"
+                                            {% if exclude_tags_field %}
+                                           value="{{ exclude_tags_field }}"
+                                            {% endif %}
+                                    >
+                                </div>
+                                <button type="submit" class="btn btn-primary">Search</button>
+                                <a id="clear_form" class="btn btn-warning">Clear Form</a>
+                            </div>
+                        </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="row" style="height:25px;"></div>
+    <hr>
+    <div class="row" style="height:40px;">
+        <h6>
+            Number of action results: {{ all_action_result_count }}
+        </h6>
+        <h6>
+            Number of snapshot results: {{ all_snapshots_result_count }}
+        </h6>
+
+    </div>
+    <hr>
+    <div class="row">
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="actions-tab" data-bs-toggle="tab" data-bs-target="#actions-container" type="button" role="tab" aria-controls="#actions-container" aria-selected="true">Actions</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="snapshots-tab" data-bs-toggle="tab" data-bs-target="#snapshots-container" type="button" role="tab" aria-controls="#snapshots-container" aria-selected="false">Snapshots</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="blindsimmer-tab" data-bs-toggle="tab" data-bs-target="#blindsimmer-container" type="button" role="tab" aria-controls="#blindsimmer-container" aria-selected="false">BlindSimmer</button>
+            </li>
+        </ul>
+        <div class="tab-content" id="myTabContent">
+            <div class="tab-pane fade show active" id="actions-container" role="tabpanel" aria-labelledby="home-tab">
+                {% for search_result in results %}
+                    {{ action_result_row(search_result.address_book, search_result.action_result.index) }}
+                {% endfor %}
+            </div>
+            <div class="tab-pane fade" id="snapshots-container" role="tabpanel" aria-labelledby="profile-tab">
+            </div>
+            <div class="tab-pane fade" id="blindsimmer-container" role="tabpanel" aria-labelledby="profile-tab">
+            </div>
+        </div>
+    </div>
+    <hr>
+{% endblock %}
+{% block script_content %}
+    <script>
+        $(function () {
+            $('#clear_form').on('click', function () {
+                if (confirm("Are you sure?") == true) {
+                    $(':input','#search_form')
+                        .not(':button, :submit, :reset, :hidden')
+                        .val('')
+                        .prop('checked', false)
+                        .prop('selected', false);
+                    $('#search_form').submit()
+                }
+
+            });
+        });
+    </script>
+    {{ action_tag_script() }}
+
+{% endblock %}

@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Latte</string>
+    <string name="accessibility_service_label">My Latte Service</string>
+    <string name="accessibility_service_description">My Description</string>
+</resources>

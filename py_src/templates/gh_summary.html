@@ -1,0 +1,130 @@
+{% extends "layout.html" %}
+{% block head_content %}
+{% endblock %}
+{% block title %}
+    Summary of Groundhog experiments
+{% endblock %}
+{% block content %}
+    <div class="row">
+        <table class="table  table-bordered" style="border-collapse:collapse;">
+            <thead>
+            <tr class="table-primary">
+                <th>App</th>
+                <th>Snapshot</th>
+                <th>Note</th>
+                <th>Missing Tag</th>
+                <th>#Actions</th>
+                <th colspan="2">#Issue</th>
+                <th colspan="2">#TB Dir. Loc. Issue(TP)</th>
+                <th colspan="2">#TB Tou. Loc. Issue(TP)</th>
+                <th colspan="2">#TB Act. Issue(TP)</th>
+                <th colspan="2">#Touch Act. Issue(TP)</th>
+                <th colspan="2">#API Act. Issue(TP)</th>
+                <th>#ATF</th>
+                <th>Explore(s)</th>
+                <th>Extract(s)</th>
+                <th>Perform(s)</th>
+                <th>UpperBound Directional</th>
+                <th>...</th>
+            </tr>
+            <tr class="table-primary">
+                <th></th>
+                <th></th>
+                <th></th>
+                <th></th>
+                <th></th>
+                <th>Actual</th>
+                <th>Detected</th>
+                <th>Actual</th>
+                <th>Detected</th>
+                <th>Actual</th>
+                <th>Detected</th>
+                <th>Actual</th>
+                <th>Detected</th>
+                <th>Actual</th>
+                <th>Detected</th>
+                <th>Actual</th>
+                <th>Detected</th>
+                <th></th>
+                <th></th>
+                <th></th>
+                <th></th>
+                <th></th>
+                <th>...</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for address_book in address_books %}
+                {% if show_all or not address_book.whelper.is_snapshot_ignored() %}
+                    {% set snapshot_summary = address_book.whelper.oracle() %}
+                    <tr class="app-row table-active">
+                        <td class="text-start text-truncate" style="max-width: 10em;">
+                            {{ address_book.app_name() }}
+                        </td>
+                        <td >
+                            <a href="{{ url_for('report_v2', result_path=result_path, app_name=address_book.app_name(), snapshot_name=address_book.snapshot_name()) }}">
+                                {{ address_book.snapshot_name()[-10:] }}
+                            </a>
+                        </td>
+                        <td class="text-start text-truncate" style="max-width: 10em;">
+                            {% set note = address_book.whelper.get_note() %}
+                            <span data-bs-toggle="tooltip" data-bs-placement="top" title="{{ note }}">
+                                {{ note }}
+                            </span>
+                        </td>
+                        <td class="
+                        {% if snapshot_summary["missing_tag"] > 0 %}
+                            bg-warning
+                        {% endif %}
+                        ">
+                            {{ snapshot_summary["missing_tag"] }}
+                        </td>
+
+                        <td>{{ address_book.whelper.get_action_count() }}</td>
+                        {% for val in ["total_issue", "tb_dir_issue", "tb_touch_issue", "tb_act_issue", "touch_act_issue", "api_act_issue"] %}
+                            <td {% if snapshot_summary["a_"+val] > 0 %} class="fw-bold" {% endif %}>
+                                {{ snapshot_summary["a_"+val] }}
+                            </td>
+                            <td class="
+                                    {% if snapshot_summary["a_"+val] > snapshot_summary[val] %}
+                                        bg-warning
+                                    {% elif snapshot_summary["a_"+val] == snapshot_summary[val] > 0 %}
+                                        bg-success text-light
+                                    {% elif snapshot_summary["a_"+val] < snapshot_summary[val] %}
+                                        bg-danger text-light
+                                    {% endif %}
+                            ">{{ snapshot_summary[val] }}({{ snapshot_summary["tp_"+val] }})</td>
+                        {% endfor %}
+                        <td>{{ address_book.whelper.get_atf_count() }}</td>
+                        {% for val in ["explore_time", "extract_time", "actions_time"] %}
+                            <td>
+                                {{ snapshot_summary[val] }}
+                            </td>
+                        {% endfor %}
+{#                        <td>#}
+{#                            {{ "{:.2f}".format(snapshot_summary["explore_time"]+snapshot_summary["extract_time"]+snapshot_summary["actions_time"] / address_book.whelper.get_action_count()) }}#}
+{#                        </td>#}
+                        <td class="{% if snapshot_summary["explore_time"] > snapshot_summary["direct_time"] %}
+                                        bg-danger text-light
+                                    {% else %}
+                                        bg-success text-light
+                                    {% endif %}">
+                            {{ snapshot_summary["direct_time"] }}
+                        </td>
+
+                        <td>
+                            {% set clickable_span = address_book.whelper.get_clickable_span_nodes() | length %}
+                            <ul>
+                                {% if clickable_span > 0 %}
+                                    <li>ClickableSpan: {{ clickable_span }}</li>
+                                {% endif %}
+                            </ul>
+                        </td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
+

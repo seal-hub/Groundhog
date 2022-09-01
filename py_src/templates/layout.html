@@ -1,0 +1,119 @@
+{% from "utils_macro.html" import nodes_diff_modal, nodes_diff_script, xml_diff_modal, xml_diff_script, image_modal, image_script with context %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+    <script src="https://kit.fontawesome.com/37a3ecb55e.js" crossorigin="anonymous"></script>
+    {% block head_content %}{% endblock %}
+    <title>BlindMonkey-{% block title %}{% endblock %}</title>
+</head>
+<body class="d-flex flex-column min-vh-100">
+
+<main>
+    <div class="container">
+        <header class="d-flex flex-wrap justify-content-center py-3 mb-4 border-bottom">
+            <a href="{{ url_for('report_index_v2', result_path_str=result_path) }}" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-dark text-decoration-none">
+                <svg class="bi me-2" width="40" height="32">
+                    <use xlink:href="#bootstrap"/>
+                </svg>
+                <span class="fs-4">Blind Monkey Reports</span>
+            </a>
+
+            <ul class="nav nav-pills">
+                <li class="nav-item">
+                    <div class="dropdown">
+                        <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                            {{ result_path[:-8].capitalize() }}
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                            {% for iter_result_path in all_result_paths if iter_result_path != result_path %}
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('report_index_v2', result_path_str=iter_result_path) }}">
+                                        {{ iter_result_path[:-8].capitalize() }}
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </li>
+                <li class="nav-item"><a href="{{ url_for('gh_summary', result_path_str=result_path) }}" class="nav-link" >Groundhog Summary</a></li>
+                <li class="nav-item"><a href="{{ url_for('snapshot_search', result_path_str=result_path) }}" class="nav-link" >SnapshotSearch</a></li>
+                <li class="nav-item"><a href="{{ url_for('search_v2', result_path_str=result_path) }}" class="nav-link" >ActionSearch</a></li>
+                <li class="nav-item"><a href="{{ url_for('tags_list', result_path=result_path) }}" class="nav-link" >Tags</a></li>
+            </ul>
+        </header>
+    </div>
+    <div class="row">
+        <div class="col-1"></div>
+        <div class="col-10">
+            <div class="row">
+                <h1>
+                    {{ self.title() }}
+                </h1>
+            </div>
+        {% block content %}{% endblock %}
+        </div>
+    </div>
+</main>
+{{ xml_diff_modal() }}
+{{ image_modal() }}
+{{ nodes_diff_modal() }}
+<footer class="footer mt-auto py-3 bg-light">
+    <div class="container">
+        <span class="text-muted">Blind Monkey</span>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4"
+        crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"
+        integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+<script>
+    function copyToClipboard(textToCopy) {
+        // navigator clipboard api needs a secure context (https)
+        if (navigator.clipboard && window.isSecureContext) {
+            // navigator clipboard api method'
+            return navigator.clipboard.writeText(textToCopy);
+        } else {
+            // text area method
+            let textArea = document.createElement("textarea");
+            textArea.value = textToCopy;
+            // make the textarea out of viewport
+            textArea.style.position = "fixed";
+            textArea.style.left = "-999999px";
+            textArea.style.top = "-999999px";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            return new Promise((res, rej) => {
+                // here the magic happens
+                document.execCommand('copy') ? res() : rej();
+                textArea.remove();
+            });
+        }
+    }
+    $(function () {
+        // Enabling Tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        })
+    });
+    $('.copyer').on('click', function () {
+        console.log($(this))
+        let textToCopy = $(this).find('.text-to-copy').attr('value');
+        {#let textToCopy = $(element).text();#}
+        {#navigator.clipboard.writeText(textToCopy)#}
+        copyToClipboard(textToCopy);
+    });
+</script>
+{{ xml_diff_script() }}
+{{ image_script() }}
+{{ nodes_diff_script() }}
+{% block script_content %}{% endblock %}
+</body>
+</html>

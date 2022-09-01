@@ -1,0 +1,3 @@
+export LATTE_PATH="$(realpath $(dirname $0))"
+export UIED_PATH="/Users/navid/Workspaces/Research/UIED"
+source $LATTE_PATH/.env/bin/activate

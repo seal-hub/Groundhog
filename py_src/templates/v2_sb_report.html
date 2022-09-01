@@ -1,0 +1,24 @@
+{% from "snapshot_macro.html" import snapshot_bs_summary with context %}
+{% from "oac_macro.html" import oac_row with context%}
+{% extends "layout.html" %}
+{% block title %}
+    Oversight Result of {{ name }} from app {{ app_name }}
+{% endblock %}
+{% block content %}
+
+{{ snapshot_bs_summary(address_book) }}
+    <div class="row">
+        <table class="table-bordered">
+            <tr>
+                <th>#</th>
+                <th>Annotated Screenshot</th>
+                <th>List of OACs</th>
+            </tr>
+            {% for oac_name in ['oacs'] + oac_names %}
+                {%  if address_book.get_oacs(oac_name) | length > 0%}
+                    {{ oac_row(address_book, oac_name, False) }}
+                {% endif %}
+            {% endfor %}
+        </table>
+    </div>
+{% endblock %}

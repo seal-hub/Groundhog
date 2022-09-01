@@ -1,0 +1,69 @@
+{% from "app_macro.html" import app_snapshots, app_post_analysis_script with context %}
+{% extends "layout.html" %}
+{% block head_content %}
+    <style>
+        .table tr.app-row {
+            cursor: pointer;
+        }
+    </style>
+{% endblock %}
+{% block title %}
+    List of apps
+{% endblock %}
+{% block content %}
+    <div class="row">
+        <table class="table  table-bordered" style="border-collapse:collapse;">
+            <thead>
+            <tr class="table-primary">
+                <th>Name</th>
+                <th>#Snapshots</th>
+                <th>#Actions</th>
+                <th>#Failures</th>
+                <th>#Warnings</th>
+                <th>#Other</th>
+                <th>Last update</th>
+                <th>...</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for app in apps %}
+                <tr class="app-row table-active" >
+                    <td class="table-secondary" data-bs-toggle="collapse" href="#{{ app.name.replace('.', '_').replace('(','_').replace(')','_') }}_row"
+                        aria-expanded="false"
+                        aria-controls="{{ app.name }}_row" >
+                        <i class="fas fa-angle-double-down"></i> {{ app.name }}
+                    </td>
+                    <td>{{ app.snapshots|length }}</td>
+                    <td>{{ app.actions }}</td>
+                    <td>{{ app.failure }}</td>
+                    <td>{{ app.warning }}</td>
+                    <td>{{ app.other }}</td>
+                    <td>{{ app.last_update }}</td>
+                    <td>
+                        {% if app.has_unprocessed %}
+                            <a href="#" class="post_analysis btn btn-secondary">
+                                Post Process
+                                <input type="hidden" class="result_path" value="{{ result_path }}">
+                                <input type="hidden" class="app_name" value="{{ app.name }}">
+                            </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="8">
+                        <div class="collapse" id="{{ app.name.replace('.', '_').replace('(','_').replace(')','_') }}_row">
+                            <div class="row">
+                                {{ app_snapshots(result_path, app) }}
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
+
+{% block script_content %}
+    {{ app_post_analysis_script() }}
+{% endblock %}

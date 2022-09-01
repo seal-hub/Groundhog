@@ -1,0 +1,213 @@
+{% from "utils_macro.html" import xml_diff_button with context %}
+{% macro action_info(action) %}
+    <table class="table">
+        {% for attr in ['class_name', 'resource_id', 'text', 'content_desc', 'xpath', 'bounds', 'node'] %}
+            <tr>
+                <td class="text-end">{{ attr }}</td>
+                <td class="text-start text-truncate" style="max-width: 10em;">
+                    <span data-bs-toggle="tooltip" data-bs-placement="top" title="{{ action[attr] }}">
+                        <a class="btn copyer">
+                                {{ action[attr] }}
+                                <input type="hidden" class="text-to-copy"
+                                       value="{{ action[attr] }}">
+                            </a>
+                    </span>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+{% endmacro %}
+{% macro result_info(action_result) %}
+    <td style="max-width: 15em" class="
+        {% if action_result.status > 20 %}
+            table-success
+        {% elif action_result.status < 10 and action_result.status > 0 %}
+            table-warning
+        {% elif action_result.status <= 0 %}
+            table-danger
+        {% elif action_result.status == 100 %}
+            table-secondary
+        {% elif 10 <= action_result.status <= 20  %}
+            table-info
+        {% else %}
+            table-light
+        {% endif %}
+    ">
+        <ul>
+            {% for message in action_result.status_messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+        <hr>
+    <div class="row">
+        {% for left_mode in ['exp', 'tb', 'reg', 'areg'] %}
+            {% set outer_loop = loop %}
+            {% for right_mode in ['exp', 'tb', 'reg', 'areg']%}
+                    {% if outer_loop.index < loop.index %}
+                        <div class="col-4 d-flex justify-content-center">
+                            {{  xml_diff_button(action_result.snapshot_info.result_path,
+                                action_result.snapshot_info.app_name,
+                                action_result.snapshot_info.snapshot_name,
+                                action_result.index,
+                                action_result.is_sighted,
+                                left_mode, right_mode,
+                                action_result['xml_similar'][left_mode][right_mode]) }}
+                        </div>
+                    {% endif %}
+            {% endfor %}
+        {% endfor %}
+    </div>
+
+        <hr>
+        <div class="row">
+            <div class="col-8">
+                <input type="text" class="action-tag-value form-control">
+            </div>
+            <div class="col-4">
+                <button class="action_tag btn btn-secondary">
+                    Add Tag
+                    <input type="hidden" class="snapshot-result-path" value="{{ action_result.snapshot_info.result_path }}">
+                    <input type="hidden" class="snapshot-app" value="{{ action_result.snapshot_info.app_name }}">
+                    <input type="hidden" class="snapshot-name" value="{{ action_result.snapshot_info.snapshot_name }}">
+                    <input type="hidden" class="snapshot-index" value="{{ action_result.index }}">
+                    <input type="hidden" class="snapshot-sighted" value="{{ 'sighted' if action_result.is_sighted else 'unsighted' }}">
+                </button>
+            </div>
+        </div>
+            <div class="m-3" >
+                Tags:
+                <div class="tag-container" style="display: block; overflow-x: auto; white-space:nowrap ">
+                    {% for tag in action_result.tags %}
+                        <span class="btn btn-light rounded-pill m-1" style="display: inline-block;">
+                            {{ tag }}
+                        </span>
+                    {% endfor %}
+                </div>
+            </div>
+        {% if 'v' not in action_result.tags %}
+            <div class="row">
+                <div class="col-4">
+                    <button class="action_tag btn btn-outline-primary">
+                        Visited?
+                        <input type="hidden" class="snapshot-result-path" value="{{ action_result.snapshot_info.result_path }}">
+                        <input type="hidden" class="snapshot-app" value="{{ action_result.snapshot_info.app_name }}">
+                        <input type="hidden" class="snapshot-name" value="{{ action_result.snapshot_info.snapshot_name }}">
+                        <input type="hidden" class="snapshot-index" value="{{ action_result.index }}">
+                        <input type="hidden" class="snapshot-sighted" value="{{ 'sighted' if action_result.is_sighted else 'unsighted' }}">
+                    </button>
+                </div>
+                <div class="col-8">
+                    <input type="hidden" class="action-tag-value form-control" value="v">
+                </div>
+            </div>
+        {% endif %}
+        </td>
+{% endmacro %}
+{% macro action_row(action_result, with_snapshot_info) %}
+    <tr class="tb-step-{{ "passed" if action_result.status == 30 else "failed" }}">
+        <th scope="row" style="max-width: 5em" class="overflow-auto">
+            {% if with_snapshot_info %}
+                <ul>
+                    <li>Index: {{ action_result.index }}</li>
+                    <li>Snapshot: <a
+                            href="{{ url_for('report_v2',
+                                    result_path=action_result.snapshot_info.result_path,
+                                    app_name=action_result.snapshot_info.app_name,
+                                    snapshot_name=action_result.snapshot_info.snapshot_name) }}">
+                        {{ action_result.snapshot_info.snapshot_name }}
+                        </a>
+                    </li>
+                    <li>App: <a href="{{ url_for('report_app_v2',
+                                    result_path=action_result.snapshot_info.result_path,
+                                    app_name=action_result.snapshot_info.app_name) }}">
+                        {{ action_result.snapshot_info.app_name }}
+                        </a>
+                    </li>
+                    <li>
+                        Sighted: {{ action_result.is_sighted }}
+                    </li>
+                    <li>
+                        <a class="btn btn-info copyer">
+                            Copy Path
+                            <input type="hidden" class="text-to-copy"
+                                   value="{{ action_result.snapshot_info.result_path }}/{{ action_result.snapshot_info.app_name }}/{{ action_result.snapshot_info.snapshot_name }}">
+                        </a>
+                    </li>
+                </ul>
+            {% else %}
+                {{ action_result.index }}
+            {% endif %}
+        </th>
+        <td style="max-width: 15em">
+            {{ action_info(action_result.action) }}
+        </td>
+        {% for mode in ['exp', 'tb', 'reg', 'areg'] %}
+            <td>
+                <a class="enlarge">
+                    <img src="{{ url_for('send_result_static_v2', path=action_result.mode_info[mode+'_img']) }}" class="rounded d-block mx-auto"
+                         style="width: 10rem;" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ action_result.mode_info[mode+'_result']|e }}" alt="Result of {{ mode }} Selection">
+                </a>
+                <hr>
+                <div class="d-flex justify-content-center">
+                    {% if action_result.mode_info[mode+'_log'] %}
+                        <a href="{{ url_for('send_result_static_v2', path=action_result.mode_info[mode+'_log']) }}">
+                            Log
+                        </a>
+                        -
+                    {% endif %}
+                    {% if action_result.mode_info[mode+'_event_log'] %}
+                        <a href="{{ url_for('send_result_static_v2', path=action_result.mode_info[mode+'_event_log']) }}">
+                            EventLog
+                        </a>
+                        -
+                    {% endif %}
+                    {% if action_result.mode_info[mode+'_layout'] %}
+                        <a href="{{ url_for('send_result_static_v2', path=action_result.mode_info[mode+'_layout']) }}">Layout</a>
+                    {% endif %}
+                </div>
+            </td>
+        {% endfor %}
+        {{ result_info(action_result) }}
+    </tr>
+{% endmacro %}
+{% macro action_tag_script() %}
+    <script>
+        $('.action_tag').on('click', function () {
+            let result_path = $(this).find('.snapshot-result-path').attr('value');
+            let app_name = $(this).find('.snapshot-app').attr('value');
+            let snapshot_name = $(this).find('.snapshot-name').attr('value');
+            let index = $(this).find('.snapshot-index').attr('value');
+            let sighted_str = $(this).find('.snapshot-sighted').attr('value');
+            let tag_input_element = $(this).parent().parent().find('.action-tag-value');
+            let tag = tag_input_element.val();
+            let tag_container_element = $(this).parent().parent().parent().find('.tag-container');
+            if (tag) {
+                {#let path = "/v2/"+ result_path +"/app/"+ app_name + "/post_analysis";#}
+                let host_url = window.location.href.split("/v2/")[0]
+                let path = `${host_url}/v2/${result_path}/app/${app_name}/snapshot/${snapshot_name}/action/${index}/${sighted_str}/tag/${tag}`
+                $.getJSON(path, {},
+                    function(data) {
+                        if (data.result) {
+                            for(var t of tag.split(',')) {
+                                new_tag = `<span class="btn btn-light rounded-pill m-1" style="display: inline-block;">
+                                            ${t}
+                                        </span>`
+                                console.log("The tag container")
+                                console.log(tag_container_element)
+                                console.log("The new element: " + new_tag)
+                                tag_container_element.append(new_tag)
+                                tag_input_element.val("");
+                            }
+                        }
+                        else{
+                            alert("There is a problem with tagging!")
+                        }
+                    });
+            }
+            else
+            {
+                alert("Empty tag");
+            }
+        });
+    </script>
+{% endmacro %}

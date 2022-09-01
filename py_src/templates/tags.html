@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+{% block title %}
+    Tags
+{% endblock %}
+{% block content %}
+    <div class="row">
+            {% for tag in tags %}
+            <div class="col-1">
+                <form action="{{ url_for('search_v2', result_path_str=result_path) }}" id="search_form" method="GET">
+                    <input type="hidden" class="form-control" name="includeTags" id="includeTagsField" value="{{ tag }}">
+                    <<button type="submit" class="btn">{{ tag }}</button>>
+                </form>
+            </div>
+            {% endfor %}
+    </div>
+{% endblock %}

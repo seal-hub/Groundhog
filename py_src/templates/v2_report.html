@@ -1,0 +1,83 @@
+{% from "snapshot_macro.html" import note_form_script, action_tag_script, snapshot_row, talkback_explore, oversight_static, snapshot_action, snapshot_summary with context %}
+{% from "action_macro.html" import  action_row with context %}
+{% extends "layout.html" %}
+{% block title %}
+    Snapshot {{ name }} from app {{ app_name }}
+{% endblock %}
+{% block content %}
+    {% if errors %}
+
+        {% for error_message in errors %}
+            <div class="row">
+                <div class="col-1"></div>
+                <div class="col-10">
+                    <div class="alert alert-danger" role="alert">
+                        {{ error_message }}
+                    </div>
+                </div>
+                <div class="col-1"></div>
+            </div>
+        {% endfor %}
+
+    {% endif %}
+    {{ snapshot_row(address_book) }}
+    {{ oversight_static(address_book) }}
+
+    <hr>
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="tb_steps_switch" checked>
+            <label class="form-check-label" for="flexSwitchCheckDefault">Hide passed actions</label>
+        </div>
+        <a class="btn btn-info copyer">
+            Copy Path
+            <input type="hidden" class="text-to-copy"
+                   value="{{ result_path }}/{{ app_name }}/{{ name }}">
+        </a>
+    <hr>
+    {% for (header_name, steps) in all_steps.items() %}
+        <div class="row">
+            <div class="col-8">
+                <h2>{{ header_name }}</h2>
+            </div>
+            <div class="col-4">
+            </div>
+        </div>
+        <div class="row">
+            <table class="table table-bordered">
+                <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Action</th>
+                    <th scope="col">{{ mode_to_repr['exp'] }}</th>
+                    <th scope="col">{{ mode_to_repr['tb'] }}</th>
+                    <th scope="col">{{ mode_to_repr['reg'] }}</th>
+                    <th scope="col">{{ mode_to_repr['areg'] }}</th>
+                    <th scope="col">Result</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for step in steps %}
+                    {{ action_row(step, false) }}
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endfor %}
+
+{% endblock %}
+{% block script_content %}
+    <script>
+        $(function () {
+            $('.tb-step-passed').hide();
+            $('#tb_steps_switch').change(function () {
+                if (this.checked) {
+                    $('.tb-step-passed').hide();
+                } else
+                    $('.tb-step-passed').show();
+            });
+        });
+
+    </script>
+    {{ action_tag_script() }}
+    {{ note_form_script() }}
+{% endblock %}

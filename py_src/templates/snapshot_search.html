@@ -1,0 +1,227 @@
+{% from "action_macro.html" import action_row, action_tag_script with context %}
+{% from "utils_macro.html" import compare_layout_form with context %}
+{% from "snapshot_macro.html" import snapshot_summary, snapshot_bs_summary with context %}
+{% extends "layout.html" %}
+{% block title %}
+    Search
+{% endblock %}
+{% block content %}
+    <div class="row">
+        <form action="{{ url_for('snapshot_search', result_path_str=result_path) }}" id="search_form" method="GET">
+            <div class="row">
+                <div class="col-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Action
+                        </div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="card mb-2">
+                        <div class="card-header">
+                            Layout
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-3">
+                                    <label for="xmlSearchField" class="form-label">Search in XML</label>
+                                </div>
+                                <div class="col-3">
+                                    <select class="form-select" name="xmlSearchMode" aria-label="XML Search Mode">
+                                        {% for item in [('ALL', 'All'),
+                                                ('exp','Initial'),
+                                                ('tb','TalkBack'),
+                                                ('reg','Touch'),
+                                                ('areg','A11yTouch')] %}
+                                            <option value="{{ item[0] }}" class="text-start"
+                                                    {% if xml_search_mode == item[0] %}
+                                                    selected
+                                                    {% endif %}>
+                                                {{ item[1] }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            {% for (attr, field) in zip(xml_search_attrs, xml_search_fields) %}
+                                <div class="row mb-3">
+                                    <div class="col-6">
+                                        <select class="form-select" name="xmlSearchAttr[]"
+                                                aria-label="XML Search Attribute">
+                                            {% for item in [('ALL', 'All'),
+                                                    ('text','Text'),
+                                                    ('content_desc','ContentDescription'),
+                                                    ('class_name','ClassName'),
+                                                    ('clickable','Clickable'),
+                                                    ('long_clickable','Long Clickable'),
+                                                    ('checkable','Checkable'),
+                                                    ('visible','Visible'),
+                                                    ('enabled','Enabled'),
+                                                    ('clickable_span','ClickableSpan'),
+                                                    ('resource_id','ResourceId'),
+                                                    ('a11y_actions','A11y Actions'),
+                                                    ('invalid','Invalid'),
+                                                    ('context_clickable','Context Clickable'),
+                                                    ('important_for_accessibility','ImportantForAccessibility'),
+                                                    ('area','Area'),
+                                                    ('width','Width'),
+                                                    ('height','Height')] %}
+                                                <option value="{{ item[0] }}" class="text-start"
+                                                        {% if attr == item[0] %}
+                                                        selected
+                                                        {% endif %}>
+                                                    {{ item[1] }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-6">
+                                        <input type="text" class="form-control" name="xmlSearchQuery[]"
+                                               id="xmlSearchField"
+                                                {% if field %}
+                                               value="{{ field }}"
+                                                {% endif %}
+                                        >
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            App & Snapshot
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <label for="appField" class="form-label">App</label>
+                                <select class="form-select" name="appName" aria-label="App Name">
+                                    {% for item in app_names %}
+                                        <option value="{{ item }}" class="text-start"
+                                                {% if app_name_field == item %}
+                                                selected
+                                                {% endif %}>
+                                            {{ item }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Other
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="countSearchSnapshotField" class="form-label">Number of Snapshots
+                                    Results</label>
+                                <select class="form-select" name="snapshot_limit_field" id="countSearchSnapshotField"
+                                        aria-label="Number of Snapshot Results">
+                                    {% for i in [1, 5, 10, 20, 50, 100, 500, 1000, 2000] %}
+                                        <option value="{{ i }}"
+                                                {% if snapshot_limit_field==i %}
+                                                selected
+                                                {% endif %}>
+                                            {{ i }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Search</button>
+                            <a id="clear_form" class="btn btn-warning">Clear Form</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="row" style="height:25px;"></div>
+    <hr>
+    <div class="row" style="height:40px;">
+        <h6>
+            Number of snapshot results: {{ all_snapshots_result_count }} Shown: {{ results | length }}
+        </h6>
+
+    </div>
+    <hr>
+    <div class="row">
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="actions-tab" data-bs-toggle="tab" data-bs-target="#actions-container"
+                        type="button" role="tab" aria-controls="#actions-container" aria-selected="false">Actions
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="snapshots-tab" data-bs-toggle="tab"
+                        data-bs-target="#snapshots-container" type="button" role="tab"
+                        aria-controls="#snapshots-container" aria-selected="true">Snapshots
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="blindsimmer-tab" data-bs-toggle="tab"
+                        data-bs-target="#blindsimmer-container" type="button" role="tab"
+                        aria-controls="#blindsimmer-container" aria-selected="false">BlindSimmer
+                </button>
+            </li>
+        </ul>
+        <div class="tab-content" id="myTabContent">
+            <div class="tab-pane fade" id="actions-container" role="tabpanel" aria-labelledby="home-tab">
+            </div>
+            <div class="tab-pane fade show active" id="snapshots-container" role="tabpanel"
+                 aria-labelledby="profile-tab">
+                <div class="row">
+                    {% for snapshot in results %}
+                        <div class="col-3 p-2">
+                            <div class="card">
+                                <div class="card-header">
+                                    Snapshot -
+                                    <a href="{{ url_for('report_v2', result_path=result_path, app_name=snapshot.address_book.app_name(), snapshot_name=snapshot.address_book.snapshot_name()) }}">{{ snapshot.address_book.snapshot_name() }}</a>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <a class="enlarge">
+                                            <img src="{{ url_for('send_result_static_v2', path=static_path_fixer(snapshot.initial_screenshot,result_path)) }}"
+                                                 class="rounded d-block mx-auto"
+                                                 style="width: 10rem;">
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="mb-3">
+                                        <p class="text-center">
+                                            <a href="{{ url_for('send_result_static_v2', path=static_path_fixer(snapshot.address_book.get_layout_path('base', 'INITIAL'), result_path)) }}">Layout</a>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="tab-pane fade" id="blindsimmer-container" role="tabpanel" aria-labelledby="profile-tab">
+            </div>
+        </div>
+    </div>
+    <hr>
+{% endblock %}
+{% block script_content %}
+    <script>
+        $(function () {
+            $('#clear_form').on('click', function () {
+                if (confirm("Are you sure?") == true) {
+                    $(':input', '#search_form')
+                        .not(':button, :submit, :reset, :hidden')
+                        .val('')
+                        .prop('checked', false)
+                        .prop('selected', false);
+                    $('#search_form').submit()
+                }
+
+            });
+        });
+    </script>
+
+{% endblock %}

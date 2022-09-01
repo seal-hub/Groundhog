@@ -1,0 +1,110 @@
+{% macro oac_row(address_book, oac_name, with_snapshot_info) %}
+    <tr>
+        <th scope="row" style="max-width: 5em" class="overflow-auto">
+            <ul>
+                {% if oac_name == 'oacs' %}
+                    <li>Name: All</li>
+                {% else %}
+                    <li>Name: {{ oac_name }}</li>
+                {% endif %}
+                {% if with_snapshot_info %}
+                    <li>Oversight:
+                        <a
+                                href="{{ url_for('report_v2',
+                                        result_path=address_book.result_path(),
+                                        app_name=address_book.app_name(),
+                                        snapshot_name=address_book.snapshot_name()) }}">
+                            {{ address_book.snapshot_name() }}
+                        </a>
+                    </li>
+                    <li>App: <a href="{{ url_for('report_app_v2',
+                                        result_path=address_book.result_path(),
+                                        app_name=address_book.app_name()) }}">
+                        {{ address_book.app_name() }}
+                    </a>
+                    </li>
+                    <li>
+                        <a class="btn btn-info copyer">
+                            Copy Path
+                            <input type="hidden" class="text-to-copy"
+                                   value="{{ address_book.result_path() }}/{{ address_book.app_name() }}/{{ address_book.snapshot_name() }}">
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </th>
+        <td style="max-width: 15em">
+            <a href="#" class="enlarge">
+                <img src="{{ url_for('send_result_static_v2', path=static_path_fixer(address_book.get_os_result_path(oac_name, extension='png'), result_path)) }}"
+                     class="rounded d-block mx-auto"
+                     style="width: 10rem;">
+            </a>
+            <hr>
+            Count: {{ address_book.get_oacs(oac_name) | length }}
+            <a href="{{ url_for('send_result_static_v2', path=static_path_fixer(address_book.get_os_result_path(oac_name, extension='jsonl'), result_path)) }}">
+                Details
+            </a>
+        </td>
+        <td>
+            <div class="row m-4">
+                <table class="table table-bordered">
+                    <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Text</th>
+                        <th scope="col">ContentD</th>
+                        <th scope="col">Clickable</th>
+                        <th scope="col">Enabled</th>
+                        <th scope="col">Visible</th>
+                        <th scope="col">Bounds</th>
+                        <th scope="col">TBR</th>
+                        <th scope="col">TBA</th>
+                        <th scope="col">APIA</th>
+                        <th scope="col">...</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for node, info in address_book.get_oacs_with_info(oac_name).items() %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td class="text-truncate" style="max-width: 10em">{{ node.text }}</td>
+                            <td>{{ node.content_desc }}</td>
+                            <td>{{ node.clickable }}</td>
+                            <td>{{ node.enabled }}</td>
+                            <td>{{ node.visible }}</td>
+                            <td>{{ node.bounds }}</td>
+                            <td>
+                                {% if node.potentially_data() or node.potentially_function() %}
+                                    {% if info.tbr != None %}
+                                        {{ info.tbr.bounds }}
+                                    {% else %}
+                                        False
+                                    {% endif %}
+
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if node.potentially_function() %}
+                                    {{ info.tba != None }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if node.potentially_function() %}
+                                    {{ info.apia != None }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>...</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </td>
+    </tr>
+{% endmacro %}
