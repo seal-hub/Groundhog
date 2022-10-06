@@ -1,7 +1,9 @@
 # Groundhog
 This is the artifact repository of the paper
 
-Navid Salehnamadi\*, Forough Mehralian\*, and Sam Malek, "**Groundhog: An Automated Accessibility Crawler for Mobile Apps**" in 2022 37th IEEE/ACM International Conference on Automated Software Engineering (ASE), 2022
+Navid Salehnamadi\*, Forough Mehralian\*, and Sam Malek, "**Groundhog: An Automated Accessibility Crawler for Mobile Apps**" in 37th IEEE/ACM International Conference on Automated Software Engineering (ASE), 2022 [[PDF]](https://seal.ics.uci.edu/publications/2022_ASE_Groundhog.pdf)
+
+For the list of apps and some examples of accessibility issues detected by Groundhog, please visit [this website](https://a11ygroundhog.github.io/).
 
 ## Abstract
 
