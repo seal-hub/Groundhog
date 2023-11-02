@@ -115,6 +115,7 @@ class PerformActionsTask(SnapshotTask):
                                          tb_touch_failed=action_results.get('tb_touch_failed', None))
             with open(snapshot.address_book.perform_actions_results_path, "a") as f:
                 f.write(f"{action_result.toJSONStr()}\n")
+
             # Post process
             annotate_rectangle(snapshot.initial_screenshot,
                                snapshot.address_book.audit_path_map[AddressBook.PERFORM_ACTIONS].joinpath(
