@@ -1,5 +1,8 @@
 import json
 import logging
+import os
+
+import cv2
 
 from GUI_utils import Node
 from command import ClickCommand, CommandResponse, LocatableCommandResponse
@@ -10,7 +13,7 @@ from padb_utils import ParallelADBLogger
 from results_utils import AddressBook, Actionables, capture_current_state, ActionResult
 from snapshot import EmulatorSnapshot
 from task.snapshot_task import SnapshotTask
-from utils import annotate_elements, annotate_rectangle
+from utils import annotate_elements, annotate_rectangle, compare_images
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +45,10 @@ class PerformActionsTask(SnapshotTask):
                 selected_actionable_nodes.append(node)
         logger.info(f"There are {len(selected_actionable_nodes)} actionable nodes!")
         tags = [BLIND_MONKEY_TAG, BLIND_MONKEY_EVENTS_TAG]
+        a11y_ineffective_node = []
+        tb_api_unlocatable_node = []
+        tb_touch_ineffective_node = []
+        tb_touch_unlocatable_node = []
         for index, node in enumerate(selected_actionable_nodes):
             command = ClickCommand(node)
             logger.info(f"Action {index}/({len(selected_actionable_nodes) - 1}): Clicking on node {node.xpath}!")
@@ -58,6 +65,7 @@ class PerformActionsTask(SnapshotTask):
                 log_message_map: dict = result[0]
                 action_response: LocatableCommandResponse = result[1]
                 if controller_mode == 'tb_touch' and action_response.state != 'COMPLETED':
+                    tb_touch_unlocatable_node.append(node)
                     action_results['tb_touch_failed'] = action_response.toJSON()
                     logger.info(f"The TalkBack Touch Controller could not locate the element! {node.xpath}")
                     # TODO: Need to write something
@@ -67,6 +75,8 @@ class PerformActionsTask(SnapshotTask):
                         controller.execute(command),
                         tags=tags)
                     log_message_map: dict = result[0]
+                    if controller_mode == 'tb_api' and action_response.state != 'COMPLETED':
+                        tb_api_unlocatable_node.append(node)
                     action_response: LocatableCommandResponse = result[1]
                 logger.info(f"The action is performed in {action_response.duration}ms! State: {action_response.state} ")
                 action_results[controller_mode] = action_response
@@ -77,6 +87,26 @@ class PerformActionsTask(SnapshotTask):
                                             log_message_map=log_message_map,
                                             dumpsys=True,
                                             has_layout=True)
+            a11y_api_res = snapshot.address_book.mode_path_map["a11y_api"]
+            tb_touch_res = snapshot.address_book.mode_path_map["tb_touch"]
+            touch_res = snapshot.address_book.mode_path_map["touch"]
+
+            # files_a11y_api = sorted([f for f in os.listdir(a11y_api_res) if f.endswith('.png')])
+            # files_tb_touch = sorted([f for f in os.listdir(tb_touch_res) if f.endswith('.png')])
+            # files_touch = sorted([f for f in os.listdir(touch_res) if f.endswith('.png')])
+            #
+            # for file_a11y_api, file_tb_touch, file_touch in zip(files_a11y_api, files_tb_touch, files_touch):
+
+            image_a11y = cv2.imread(os.path.join(a11y_api_res, str(index) + ".png"))
+            image_tb_touch = cv2.imread(os.path.join(tb_touch_res, str(index) + ".png"))
+            benchmark = cv2.imread(os.path.join(touch_res, str(index) + ".png"))
+            a11y_action_res = compare_images(image_a11y, benchmark)
+            tb_touch_action_res = compare_images(image_tb_touch, benchmark)
+            if a11y_action_res == False:
+                a11y_ineffective_node.append(node)
+            if tb_touch_action_res == False and node not in tb_touch_unlocatable_node:
+                tb_touch_ineffective_node.append(node)
+
             action_result = ActionResult(index=index,
                                          node=node,
                                          tb_action_result=action_results['tb_touch'],
@@ -96,6 +126,22 @@ class PerformActionsTask(SnapshotTask):
                                outline=[(244, 164, 96), (144, 238, 144), (220, 20, 60), (0, 139, 139)],
                                width=[5, 15, 5, 5],
                                scale=[1, 20, 7, 13])
+        if len(tb_touch_unlocatable_node) !=0:
+            annotate_elements(self.snapshot.initial_screenshot,
+                              self.snapshot.address_book.tb_touch_unlocatable_nodes_screenshot,
+                              tb_touch_unlocatable_node)
+        if len(tb_api_unlocatable_node) !=0:
+            annotate_elements(self.snapshot.initial_screenshot,
+                              self.snapshot.address_book.tb_api_unlocatable_nodes_screenshot,
+                              tb_api_unlocatable_node)
+        if len(tb_touch_ineffective_node) !=0:
+            annotate_elements(self.snapshot.initial_screenshot,
+                              self.snapshot.address_book.tb_touch_ineffective_nodes_screenshot,
+                              tb_touch_ineffective_node)
+        if len(a11y_ineffective_node) !=0:
+            annotate_elements(self.snapshot.initial_screenshot,
+                              self.snapshot.address_book.a11y_ineffective_nodes_screenshot,
+                              a11y_ineffective_node)
 
     async def write_ATF_issues(self):
         atf_issues = await report_atf_issues()

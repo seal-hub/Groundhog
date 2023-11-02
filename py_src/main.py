@@ -130,8 +130,11 @@ if __name__ == "__main__":
     parser.add_argument('--adb-port', type=int, default=ADB_PORT, help='The port number of ADB')
     parser.add_argument('--debug', action='store_true')
     parser.add_argument('--quiet', action='store_true')
+    parser.add_argument('--windows', action='store_true', help='Determines if the host operating system is windows')
     args = parser.parse_args()
     app_result_path = Path(args.output_path).joinpath(args.app_name)
+    if args.windows:
+        asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
     if args.snapshot_task is not None:
         snapshot_result_paths = []
         if args.snapshot:

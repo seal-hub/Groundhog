@@ -2,7 +2,8 @@ import logging
 from typing import List, Union, Tuple, Dict
 from pathlib import Path
 from PIL import Image, ImageDraw
-
+import cv2
+from skimage import metrics
 from GUI_utils import Node
 
 logger = logging.getLogger(__name__)
@@ -167,3 +168,24 @@ def create_gif(source_images: List[Union[str, Path]],
                                          scale=scale)
                 images.append(img)
     images[0].save(target_gif, save_all=True, append_images=images[1:], optimize=False, duration=300, loop=0)
+
+
+def compare_images(imageA, imageB) -> bool:
+    # Convert images to grayscale if they are in color
+    if len(imageA.shape) > 2:
+        imageA = cv2.cvtColor(imageA, cv2.COLOR_BGR2GRAY)
+    if len(imageB.shape) > 2:
+        imageB = cv2.cvtColor(imageB, cv2.COLOR_BGR2GRAY)
+
+    # Compute SSIM between two images
+    s, diff = metrics.structural_similarity(imageA, imageB, full=True, channel_axis= -1)
+
+    # Define a threshold for SSIM. If SSIM is below this threshold, report images as not similar
+    similarity_threshold = 0.95
+    if s < similarity_threshold:
+        return False
+    else:
+        return True
+
+
+

@@ -577,6 +577,14 @@ class AddressBook:
             "visited_nodes.png")
         self.tb_explore_visited_nodes_gif = self.audit_path_map[AddressBook.TALKBACK_EXPLORE].joinpath(
             "visited_nodes.gif")
+        self.tb_touch_unlocatable_nodes_screenshot = self.snapshot_result_path.joinpath(
+            "tb_touch_unlocatable_nodes.png")
+        self.tb_api_unlocatable_nodes_screenshot = self.snapshot_result_path.joinpath(
+            "tb_api_unlocatable_nodes.png")
+        self.tb_touch_ineffective_nodes_screenshot = self.snapshot_result_path.joinpath(
+            "tb_touch_ineffective_nodes.png")
+        self.a11y_ineffective_nodes_screenshot = self.snapshot_result_path.joinpath(
+            "a11y_ineffective_nodes.png")
         # ----------- Audit: oversight_static ---------------
         self.audit_path_map[AddressBook.OVERSIGHT_STATIC] = self.snapshot_result_path.joinpath("OversightStatic")
         # ----------- Audit: Process Snapshot (OCR) ---------------
