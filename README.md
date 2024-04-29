@@ -18,7 +18,6 @@ This repository is tested on Mac OSX; however, it should work on any Unix system
 - Add emulator and platform tools to `PATH` (if it's not already added). `export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:${PATH}"`
 - Setup Stoat from [this repository](https://github.com/fmehralian/Stoat/tree/navid).
 - (Optional) create a virtual environment in `.env` (`python3 -m venv .env`)
-- Run `source env`
 - Install python packages `pip install -r requirements.txt`
 - Initialize an Android Virtual Device (AVD) with SDK +28
 - (Optional) To prevent any interrupt on the process of validating the apps, like random notifications during the analysis of an app, you can follow these steps.
@@ -26,7 +25,7 @@ This repository is tested on Mac OSX; however, it should work on any Unix system
 		- If virtual device is not disabled, please follow this [link](https://support.honeywellaidc.com/s/article/CN51-Android-How-to-prevent-virtual-keyboard-from-popping-up)
 	- Enable "Do not disturb" in the emulator to avoid notifications during testing (it can be found at the top menu)
 - Install TalkBack, the version 12 can be found in `Setup/X86/TB_12_*.apk` (`adb install-multiple Setup/X86/TB_12_*.apk`)
-- Build Groundhog Service APK by running `./build_groundhog.sh`, then install it (`adb install -r -g Setup/groundhog.apk`) or install from Android Studio
+- Build Groundhog Service APK by running `./build_latte_lib.sh`, then install it (`adb install -r -g Setup/latte.apk`) or install from Android Studio
 	- To check if the installation is correct, first run the emulator and then execute `./scripts/enable-talkback.sh` (by clicking on a GUI element it should be highlighted).
 	- Also, execute `./scripts/send-command.sh log` and check Android logs to see if Latte prints the AccessibilityNodeInfos of GUI element on the screen (`adb logcat | grep "LATTE_SERVICE"`)
 -  Save the base snapshot by `./scripts/save_snapshot.sh BASE`
@@ -57,8 +56,22 @@ You can interact with Latte by sending commands to its Broadcast Receiver or rec
 	- `nav_current_focus`: Report the current focused node in TalkBack. Output's file name: `finish_nav_action.txt`
 
 ## Running Groundhog
-To analyze a snapshot, first load the BASE snapshot `./scripts/load_snapshot.sh BASE`, then install the app under test, and go to the screen that you want to analyze. Next, creates a new snapshot by `./scripts/save_snapshot.sh <SNAPSHOT>`. Now you can run the BlindMonkey on this snapshot by running
-```
-python pt_src/main.py --app-name <APP_NAME> --output-path <RESLUT_PATH> --snapshot <SNAPSHOT> --debug --device "emulator-5554"
+To analyze a snapshot, first load the BASE snapshot `./scripts/load_snapshot.sh BASE`, then install the app under test, and go to the screen that you want to analyze. Next, creates a new snapshot by `./scripts/save_snapshot.sh <SNAPSHOT>`. Now you can run the Groundhog on this snapshot by
+
+1. **Taking a Snapshot - Execute the following command to capture a snapshot of the application**:
+
+```shell
+python main.py --app-name "Blue Light Filter - Night Mode" --output-path "Analyze_Snapshot" --snapshot "Snapshot1" --debug --device "emulator-5554" --snapshot-task "extract_actions" --emulator
 ```
 
+--app-name: The name of the application you wish to test. --output-path: The directory where the analysis results will be stored. --snapshot: The name assigned to the snapshot. You are free to choose any name for this parameter. 
+
+
+
+2. **Detecting Accessibility Issues - After capturing the snapshot, run the following command to initiate the accessibility issue detection**:
+
+```shell
+python main.py --app-name "Blue Light Filter - Night Mode" --output-path "Analyze_Snapshot" --snapshot "Snapshot1" --debug --device "emulator-5554" --snapshot-task "perform_actions" --emulator
+```
+
+Ensure that the snapshot name (--snapshot) is consistent with the one used in the previous command, which in this case is "Snapshot1".
